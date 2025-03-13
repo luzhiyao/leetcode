@@ -63,9 +63,23 @@ public class Permutations {
             current.remove(current.size() - 1);
         }
     }
-    
+ 
     /**
-     * 通过交换元素生成全排列（另一种实现方式）
+     * 通过交换元素生成全排列
+     * 
+     * 该方法使用交换的思想来生成全排列，具体步骤如下：
+     * 1. 从数组的第一个位置开始，依次确定每个位置上的元素
+     * 2. 对于位置 start，尝试将后面的每个元素（包括start本身）交换到该位置
+     * 3. 交换后，递归处理剩余的位置（start+1 到末尾）
+     * 4. 处理完后，再将元素交换回来（回溯），以恢复原始状态
+     * 
+     * 例如对于数组 [1,2,3]：
+     * - 第一步可以将1,2,3分别放在第一个位置
+     * - 当1在第一个位置时，可以将2,3分别放在第二个位置
+     * - 最后一个位置的元素自动确定
+     * 
+     * @param nums 需要生成全排列的数组
+     * @return 包含所有可能排列的列表
      */
     public List<List<Integer>> permuteBySwap(int[] nums) {
         List<List<Integer>> result = new ArrayList<>();
@@ -73,6 +87,13 @@ public class Permutations {
         return result;
     }
     
+    /**
+     * 递归辅助方法，通过交换元素生成全排列
+     * 
+     * @param nums 原始数组
+     * @param start 当前要确定元素的位置
+     * @param result 存储所有排列结果的列表
+     */
     private void permuteHelper(int[] nums, int start, List<List<Integer>> result) {
         // 当所有位置都已经确定时，添加当前排列到结果中
         if (start == nums.length) {
@@ -89,14 +110,14 @@ public class Permutations {
             // 交换当前位置和位置i的元素
             swap(nums, start, i);
             
-            // 确定后续位置的元素
+            // 递归处理剩余位置的元素
             permuteHelper(nums, start + 1, result);
             
-            // 回溯：恢复原始顺序
+            // 回溯：将元素交换回原位，恢复原始顺序
+            // 这一步确保了下一次循环时数组的状态是正确的
             swap(nums, start, i);
         }
     }
-    
     private void swap(int[] nums, int i, int j) {
         int temp = nums[i];
         nums[i] = nums[j];
