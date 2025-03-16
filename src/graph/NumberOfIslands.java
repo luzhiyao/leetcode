@@ -7,7 +7,7 @@ import java.util.Queue;
  * LeetCode 200. 岛屿数量 (Number of Islands)
  * 
  * 问题描述：
- * 给你一个由 '1'（陆地）和 '0'（水）组成的二维网格，请你计算网格中岛屿的数量。
+ * 给你一个由 '1'（陆地）和 '0'（水）组成的的二维网格，请你计算网格中岛屿的数量。
  * 岛屿总是被水包围，并且每座岛屿只能由水平方向和/或竖直方向上相邻的陆地连接形成。
  * 此外，你可以假设该网格的四条边均被水包围。
  * 
@@ -28,14 +28,14 @@ import java.util.Queue;
  * ]
  * 输出：3
  * 
- * 时间复杂度：O(M×N)，其中 M 和 N 分别为行数和列数
- * 空间复杂度：O(min(M,N))，最坏情况下的递归深度
+ * 时间复杂度：O(m*n)，其中m和n分别为行数和列数
+ * 空间复杂度：O(m*n)
  */
 public class NumberOfIslands {
     
     /**
      * DFS解法
-     * 思路：遍历网格，对于每个值为'1'的单元格，执行DFS并将所有相连的'1'标记为已访问
+     * 使用深度优先搜索标记已访问的陆地
      */
     public int numIslands(char[][] grid) {
         if (grid == null || grid.length == 0) {
@@ -48,7 +48,6 @@ public class NumberOfIslands {
         
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
-                // 如果找到一个陆地（'1'），开始DFS，并增加岛屿计数
                 if (grid[r][c] == '1') {
                     count++;
                     dfs(grid, r, c);
@@ -59,20 +58,19 @@ public class NumberOfIslands {
         return count;
     }
     
-    // DFS递归方法，将相连的陆地标记为已访问（将'1'改为'0'）
     private void dfs(char[][] grid, int r, int c) {
         int rows = grid.length;
         int cols = grid[0].length;
         
-        // 边界检查：如果索引越界或者当前单元格不是陆地，直接返回
+        // 边界检查或已访问（标记为'0'）
         if (r < 0 || c < 0 || r >= rows || c >= cols || grid[r][c] == '0') {
             return;
         }
         
-        // 标记当前单元格为已访问（将'1'改为'0'）
+        // 标记当前陆地为已访问
         grid[r][c] = '0';
         
-        // 递归搜索上、下、左、右四个方向
+        // 访问四个相邻位置
         dfs(grid, r - 1, c); // 上
         dfs(grid, r + 1, c); // 下
         dfs(grid, r, c - 1); // 左
@@ -81,7 +79,7 @@ public class NumberOfIslands {
     
     /**
      * BFS解法
-     * 思路：遍历网格，对于每个值为'1'的单元格，使用BFS探索所有相连的陆地
+     * 使用广度优先搜索标记已访问的陆地
      */
     public int numIslandsBFS(char[][] grid) {
         if (grid == null || grid.length == 0) {
@@ -104,33 +102,29 @@ public class NumberOfIslands {
         return count;
     }
     
-    // BFS方法，使用队列实现
     private void bfs(char[][] grid, int r, int c) {
         int rows = grid.length;
         int cols = grid[0].length;
         
-        // 定义方向数组：上、下、左、右
-        int[] dr = {-1, 1, 0, 0};
-        int[] dc = {0, 0, -1, 1};
-        
         Queue<int[]> queue = new LinkedList<>();
         queue.offer(new int[]{r, c});
-        grid[r][c] = '0'; // 标记为已访问
+        grid[r][c] = '0'; // 标记起始位置为已访问
+        
+        // 定义四个方向：上、下、左、右
+        int[][] directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
         
         while (!queue.isEmpty()) {
-            int[] cell = queue.poll();
-            int row = cell[0];
-            int col = cell[1];
+            int[] current = queue.poll();
             
-            // 探索上、下、左、右四个方向
-            for (int i = 0; i < 4; i++) {
-                int newRow = row + dr[i];
-                int newCol = col + dc[i];
+            // 探索四个方向
+            for (int[] dir : directions) {
+                int newR = current[0] + dir[0];
+                int newC = current[1] + dir[1];
                 
-                // 检查边界和是否是陆地
-                if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols && grid[newRow][newCol] == '1') {
-                    queue.offer(new int[]{newRow, newCol});
-                    grid[newRow][newCol] = '0'; // 标记为已访问
+                // 检查新位置是否有效且是陆地
+                if (newR >= 0 && newC >= 0 && newR < rows && newC < cols && grid[newR][newC] == '1') {
+                    queue.offer(new int[]{newR, newC});
+                    grid[newR][newC] = '0'; // 标记为已访问
                 }
             }
         }
@@ -138,7 +132,7 @@ public class NumberOfIslands {
     
     /**
      * 并查集解法
-     * 思路：使用并查集将相连的陆地合并为一个集合，最终集合的数量就是岛屿的数量
+     * 使用并查集连接相邻的陆地
      */
     public int numIslandsUnionFind(char[][] grid) {
         if (grid == null || grid.length == 0) {
@@ -151,23 +145,22 @@ public class NumberOfIslands {
         // 创建并查集
         UnionFind uf = new UnionFind(grid);
         
-        // 定义方向数组：上、下、左、右
-        int[] dr = {-1, 1, 0, 0};
-        int[] dc = {0, 0, -1, 1};
+        // 定义四个方向：右、下（只需要向右和向下合并，因为向左和向上的合并会被其他位置的向右和向下覆盖）
+        int[][] directions = {{0, 1}, {1, 0}};
         
         for (int r = 0; r < rows; r++) {
             for (int c = 0; c < cols; c++) {
                 if (grid[r][c] == '1') {
-                    // 标记当前单元格为已访问
+                    // 标记当前陆地为已访问，避免重复计算
                     grid[r][c] = '0';
                     
-                    // 探索上、下、左、右四个方向，将相邻的陆地合并
-                    for (int i = 0; i < 4; i++) {
-                        int newRow = r + dr[i];
-                        int newCol = c + dc[i];
+                    // 检查右边和下边是否也是陆地，如果是则合并
+                    for (int[] dir : directions) {
+                        int newR = r + dir[0];
+                        int newC = c + dir[1];
                         
-                        if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols && grid[newRow][newCol] == '1') {
-                            uf.union(r * cols + c, newRow * cols + newCol);
+                        if (newR >= 0 && newC >= 0 && newR < rows && newC < cols && grid[newR][newC] == '1') {
+                            uf.union(r * cols + c, newR * cols + newC);
                         }
                     }
                 }
@@ -179,9 +172,9 @@ public class NumberOfIslands {
     
     // 并查集实现
     class UnionFind {
-        private int count; // 集合数量
-        private int[] parent; // 父节点
-        private int[] rank; // 秩（树高）
+        int[] parent;  // 父节点数组
+        int[] rank;    // 秩数组，用于按秩合并
+        int count;     // 连通分量数量
         
         public UnionFind(char[][] grid) {
             int rows = grid.length;
@@ -189,28 +182,28 @@ public class NumberOfIslands {
             
             parent = new int[rows * cols];
             rank = new int[rows * cols];
-            count = 0;
             
-            // 初始化
+            // 初始化并查集
+            count = 0;
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < cols; c++) {
                     if (grid[r][c] == '1') {
-                        parent[r * cols + c] = r * cols + c; // 自己是自己的父节点
-                        count++; // 每个陆地单元格都是一个独立的集合
+                        parent[r * cols + c] = r * cols + c; // 初始时父节点指向自己
+                        count++; // 发现一个新岛屿
                     }
                 }
             }
         }
         
-        // 查找操作，带路径压缩
+        // 查找操作（带路径压缩）
         public int find(int x) {
             if (parent[x] != x) {
-                parent[x] = find(parent[x]);
+                parent[x] = find(parent[x]); // 路径压缩
             }
             return parent[x];
         }
         
-        // 合并操作，按秩合并
+        // 合并操作（按秩合并）
         public void union(int x, int y) {
             int rootX = find(x);
             int rootY = find(y);
@@ -224,7 +217,7 @@ public class NumberOfIslands {
                     parent[rootY] = rootX;
                     rank[rootX]++;
                 }
-                count--; // 合并后，集合数量减1
+                count--; // 两个岛屿合并为一个
             }
         }
         
@@ -233,30 +226,11 @@ public class NumberOfIslands {
         }
     }
     
-    // 用于显示岛屿数量的辅助方法
-    private static void printGrid(char[][] grid) {
-        for (char[] row : grid) {
-            for (char cell : row) {
-                System.out.print(cell + " ");
-            }
-            System.out.println();
-        }
-    }
-    
-    // 创建网格副本
-    private static char[][] copyGrid(char[][] grid) {
-        char[][] copy = new char[grid.length][grid[0].length];
-        for (int i = 0; i < grid.length; i++) {
-            System.arraycopy(grid[i], 0, copy[i], 0, grid[i].length);
-        }
-        return copy;
-    }
-    
     // 测试方法
     public static void main(String[] args) {
         NumberOfIslands solution = new NumberOfIslands();
         
-        // 测试例子1
+        // 测试用例1
         char[][] grid1 = {
             {'1', '1', '1', '1', '0'},
             {'1', '1', '0', '1', '0'},
@@ -264,19 +238,16 @@ public class NumberOfIslands {
             {'0', '0', '0', '0', '0'}
         };
         
-        System.out.println("输入网格1:");
-        printGrid(grid1);
-        
+        // 复制原始网格，因为解法会修改输入
         char[][] grid1Copy1 = copyGrid(grid1);
-        System.out.println("DFS结果: " + solution.numIslands(grid1Copy1));
-        
         char[][] grid1Copy2 = copyGrid(grid1);
-        System.out.println("BFS结果: " + solution.numIslandsBFS(grid1Copy2));
         
-        char[][] grid1Copy3 = copyGrid(grid1);
-        System.out.println("并查集结果: " + solution.numIslandsUnionFind(grid1Copy3));
+        System.out.println("测试用例1:");
+        System.out.println("DFS解法: " + solution.numIslands(grid1));  // 预期输出: 1
+        System.out.println("BFS解法: " + solution.numIslandsBFS(grid1Copy1));
+        System.out.println("并查集解法: " + solution.numIslandsUnionFind(grid1Copy2));
         
-        // 测试例子2
+        // 测试用例2
         char[][] grid2 = {
             {'1', '1', '0', '0', '0'},
             {'1', '1', '0', '0', '0'},
@@ -284,36 +255,52 @@ public class NumberOfIslands {
             {'0', '0', '0', '1', '1'}
         };
         
-        System.out.println("\n输入网格2:");
-        printGrid(grid2);
-        
+        // 复制原始网格
         char[][] grid2Copy1 = copyGrid(grid2);
-        System.out.println("DFS结果: " + solution.numIslands(grid2Copy1));
-        
         char[][] grid2Copy2 = copyGrid(grid2);
-        System.out.println("BFS结果: " + solution.numIslandsBFS(grid2Copy2));
         
-        char[][] grid2Copy3 = copyGrid(grid2);
-        System.out.println("并查集结果: " + solution.numIslandsUnionFind(grid2Copy3));
+        System.out.println("\n测试用例2:");
+        System.out.println("DFS解法: " + solution.numIslands(grid2));  // 预期输出: 3
+        System.out.println("BFS解法: " + solution.numIslandsBFS(grid2Copy1));
+        System.out.println("并查集解法: " + solution.numIslandsUnionFind(grid2Copy2));
         
-        // 测试例子3：复杂的岛屿结构
-        char[][] grid3 = {
-            {'1', '1', '1', '0', '1'},
-            {'1', '0', '0', '0', '0'},
-            {'0', '0', '1', '0', '1'},
-            {'1', '0', '1', '1', '1'}
+        // 测试用例3: 空网格
+        char[][] grid3 = {};
+        
+        System.out.println("\n测试用例3 (空网格):");
+        System.out.println("DFS解法: " + solution.numIslands(grid3));  // 预期输出: 0
+        System.out.println("BFS解法: " + solution.numIslandsBFS(grid3));
+        System.out.println("并查集解法: " + solution.numIslandsUnionFind(grid3));
+        
+        // 测试用例4: 所有位置都是水
+        char[][] grid4 = {
+            {'0', '0', '0'},
+            {'0', '0', '0'},
+            {'0', '0', '0'}
         };
         
-        System.out.println("\n输入网格3:");
-        printGrid(grid3);
+        System.out.println("\n测试用例4 (全是水):");
+        System.out.println("DFS解法: " + solution.numIslands(grid4));  // 预期输出: 0
+        System.out.println("BFS解法: " + solution.numIslandsBFS(grid4));
+        System.out.println("并查集解法: " + solution.numIslandsUnionFind(grid4));
+    }
+    
+    // 辅助方法：复制二维网格
+    private static char[][] copyGrid(char[][] grid) {
+        if (grid == null || grid.length == 0) {
+            return new char[0][0];
+        }
         
-        char[][] grid3Copy1 = copyGrid(grid3);
-        System.out.println("DFS结果: " + solution.numIslands(grid3Copy1));
+        int rows = grid.length;
+        int cols = grid[0].length;
+        char[][] copy = new char[rows][cols];
         
-        char[][] grid3Copy2 = copyGrid(grid3);
-        System.out.println("BFS结果: " + solution.numIslandsBFS(grid3Copy2));
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                copy[r][c] = grid[r][c];
+            }
+        }
         
-        char[][] grid3Copy3 = copyGrid(grid3);
-        System.out.println("并查集结果: " + solution.numIslandsUnionFind(grid3Copy3));
+        return copy;
     }
 } 

@@ -20,8 +20,8 @@ import java.util.Stack;
  * 输入：root = [1]
  * 输出：[1]
  * 
- * 时间复杂度：O(n)，其中 n 是二叉树的节点数
- * 空间复杂度：O(n)，最坏情况下需要存储整棵树（例如，当树退化为链表时）
+ * 时间复杂度：O(n)，其中n是节点的数量
+ * 空间复杂度：递归解法O(h)，迭代解法O(h)，其中h是树的高度
  */
 public class BinaryTreeInorderTraversal {
     
@@ -33,8 +33,8 @@ public class BinaryTreeInorderTraversal {
         
         TreeNode() {}
         
-        TreeNode(int val) { 
-            this.val = val; 
+        TreeNode(int val) {
+            this.val = val;
         }
         
         TreeNode(int val, TreeNode left, TreeNode right) {
@@ -45,7 +45,8 @@ public class BinaryTreeInorderTraversal {
     }
     
     /**
-     * 递归实现的中序遍历
+     * 递归解法
+     * 中序遍历的顺序：左子树 -> 根节点 -> 右子树
      */
     public List<Integer> inorderTraversal(TreeNode root) {
         List<Integer> result = new ArrayList<>();
@@ -60,39 +61,33 @@ public class BinaryTreeInorderTraversal {
         
         // 先遍历左子树
         inorderHelper(node.left, result);
-        // 然后访问根节点
+        // 访问根节点
         result.add(node.val);
         // 最后遍历右子树
         inorderHelper(node.right, result);
     }
     
     /**
-     * 迭代实现的中序遍历
+     * 迭代解法
+     * 使用栈来模拟递归过程
      */
     public List<Integer> inorderTraversalIterative(TreeNode root) {
         List<Integer> result = new ArrayList<>();
-        if (root == null) {
-            return result;
-        }
-        
         Stack<TreeNode> stack = new Stack<>();
         TreeNode current = root;
         
-        // 当还有节点未处理或栈不为空时继续遍历
         while (current != null || !stack.isEmpty()) {
-            // 将当前节点的所有左子节点入栈
+            // 一直往左走，将所有左侧节点入栈
             while (current != null) {
                 stack.push(current);
                 current = current.left;
             }
             
-            // 弹出栈顶节点（当前子树最左侧的节点）
+            // 弹出栈顶节点（最左侧节点）
             current = stack.pop();
-            
-            // 访问该节点
+            // 访问节点
             result.add(current.val);
-            
-            // 处理右子树
+            // 转向右子树
             current = current.right;
         }
         
@@ -100,14 +95,13 @@ public class BinaryTreeInorderTraversal {
     }
     
     /**
-     * Morris中序遍历 (无需额外空间的遍历方法)
-     * 时间复杂度: O(n)
-     * 空间复杂度: O(1)
+     * Morris中序遍历（不使用栈或递归，空间复杂度O(1)）
+     * 利用线索二叉树的思想，将叶子节点的右空指针指向中序遍历的后继节点
      */
     public List<Integer> inorderTraversalMorris(TreeNode root) {
         List<Integer> result = new ArrayList<>();
         TreeNode current = root;
-        TreeNode pre;
+        TreeNode predecessor = null;
         
         while (current != null) {
             if (current.left == null) {
@@ -116,18 +110,18 @@ public class BinaryTreeInorderTraversal {
                 current = current.right;
             } else {
                 // 有左子树，找到当前节点在中序遍历下的前驱节点
-                pre = current.left;
-                while (pre.right != null && pre.right != current) {
-                    pre = pre.right;
+                predecessor = current.left;
+                while (predecessor.right != null && predecessor.right != current) {
+                    predecessor = predecessor.right;
                 }
                 
-                if (pre.right == null) {
-                    // 第一次访问，将前驱节点的右指针指向当前节点，然后转向左子树
-                    pre.right = current;
+                if (predecessor.right == null) {
+                    // 第一次访问，建立线索（前驱节点的右指针指向当前节点）
+                    predecessor.right = current;
                     current = current.left;
                 } else {
-                    // 第二次访问，恢复树结构，访问当前节点，然后转向右子树
-                    pre.right = null;
+                    // 第二次访问，已经遍历完左子树，访问当前节点并恢复树结构
+                    predecessor.right = null;
                     result.add(current.val);
                     current = current.right;
                 }
@@ -137,76 +131,84 @@ public class BinaryTreeInorderTraversal {
         return result;
     }
     
-    // 辅助方法：创建树
-    private static TreeNode createTree(Integer[] values) {
+    // 创建二叉树的辅助方法
+    public static TreeNode createTree(Integer[] values) {
         if (values == null || values.length == 0 || values[0] == null) {
             return null;
         }
         
-        java.util.Queue<TreeNode> queue = new java.util.LinkedList<>();
-        TreeNode root = new TreeNode(values[0]);
-        queue.offer(root);
-        
-        for (int i = 1; i < values.length; i += 2) {
-            TreeNode current = queue.poll();
-            
+        TreeNode[] nodes = new TreeNode[values.length];
+        for (int i = 0; i < values.length; i++) {
             if (values[i] != null) {
-                current.left = new TreeNode(values[i]);
-                queue.offer(current.left);
-            }
-            
-            if (i + 1 < values.length && values[i + 1] != null) {
-                current.right = new TreeNode(values[i + 1]);
-                queue.offer(current.right);
+                nodes[i] = new TreeNode(values[i]);
             }
         }
         
-        return root;
+        for (int i = 0; i < values.length; i++) {
+            if (nodes[i] != null) {
+                int leftIndex = 2 * i + 1;
+                int rightIndex = 2 * i + 2;
+                
+                if (leftIndex < values.length) {
+                    nodes[i].left = nodes[leftIndex];
+                }
+                
+                if (rightIndex < values.length) {
+                    nodes[i].right = nodes[rightIndex];
+                }
+            }
+        }
+        
+        return nodes[0];
     }
     
     // 测试方法
     public static void main(String[] args) {
         BinaryTreeInorderTraversal solution = new BinaryTreeInorderTraversal();
         
-        // 测试例子1: [1,null,2,3] 表示如下树:
-        //   1
-        //    \
-        //     2
-        //    /
-        //   3
-        Integer[] values1 = {1, null, 2, null, null, 3};
-        TreeNode root1 = createTree(values1);
+        // 测试用例1: [1,null,2,3]
+        //    1
+        //     \
+        //      2
+        //     /
+        //    3
+        TreeNode root1 = new TreeNode(1);
+        root1.right = new TreeNode(2);
+        root1.right.left = new TreeNode(3);
         
-        System.out.println("输入: [1,null,2,3]");
-        System.out.println("递归中序遍历: " + solution.inorderTraversal(root1));
-        System.out.println("迭代中序遍历: " + solution.inorderTraversalIterative(root1));
-        System.out.println("Morris中序遍历: " + solution.inorderTraversalMorris(root1));
+        System.out.println("测试用例1: [1,null,2,3]");
+        System.out.println("递归解法: " + solution.inorderTraversal(root1));  // 预期输出: [1,3,2]
+        System.out.println("迭代解法: " + solution.inorderTraversalIterative(root1));
+        System.out.println("Morris遍历: " + solution.inorderTraversalMorris(root1));
         
-        // 测试例子2: 空树
-        TreeNode root2 = null;
-        System.out.println("\n输入: []");
-        System.out.println("递归中序遍历: " + solution.inorderTraversal(root2));
-        System.out.println("迭代中序遍历: " + solution.inorderTraversalIterative(root2));
-        System.out.println("Morris中序遍历: " + solution.inorderTraversalMorris(root2));
+        // 测试用例2: [1,2,3,4,5,6,7]
+        //        1
+        //       / \
+        //      2   3
+        //     / \ / \
+        //    4  5 6  7
+        Integer[] values = {1, 2, 3, 4, 5, 6, 7};
+        TreeNode root2 = createTree(values);
         
-        // 测试例子3: 只有一个节点的树
+        System.out.println("\n测试用例2: [1,2,3,4,5,6,7]");
+        System.out.println("递归解法: " + solution.inorderTraversal(root2));  // 预期输出: [4,2,5,1,6,3,7]
+        System.out.println("迭代解法: " + solution.inorderTraversalIterative(root2));
+        System.out.println("Morris遍历: " + solution.inorderTraversalMorris(root2));
+        
+        // 测试用例3: [1]
         TreeNode root3 = new TreeNode(1);
-        System.out.println("\n输入: [1]");
-        System.out.println("递归中序遍历: " + solution.inorderTraversal(root3));
-        System.out.println("迭代中序遍历: " + solution.inorderTraversalIterative(root3));
-        System.out.println("Morris中序遍历: " + solution.inorderTraversalMorris(root3));
         
-        // 测试例子4: 完整二叉树
-        //      1
-        //    /   \
-        //   2     3
-        //  / \   / \
-        // 4   5 6   7
-        Integer[] values4 = {1, 2, 3, 4, 5, 6, 7};
-        TreeNode root4 = createTree(values4);
-        System.out.println("\n输入: [1,2,3,4,5,6,7]");
-        System.out.println("递归中序遍历: " + solution.inorderTraversal(root4));
-        System.out.println("迭代中序遍历: " + solution.inorderTraversalIterative(root4));
-        System.out.println("Morris中序遍历: " + solution.inorderTraversalMorris(root4));
+        System.out.println("\n测试用例3: [1]");
+        System.out.println("递归解法: " + solution.inorderTraversal(root3));  // 预期输出: [1]
+        System.out.println("迭代解法: " + solution.inorderTraversalIterative(root3));
+        System.out.println("Morris遍历: " + solution.inorderTraversalMorris(root3));
+        
+        // 测试用例4: []
+        TreeNode root4 = null;
+        
+        System.out.println("\n测试用例4: []");
+        System.out.println("递归解法: " + solution.inorderTraversal(root4));  // 预期输出: []
+        System.out.println("迭代解法: " + solution.inorderTraversalIterative(root4));
+        System.out.println("Morris遍历: " + solution.inorderTraversalMorris(root4));
     }
 } 

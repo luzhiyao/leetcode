@@ -11,107 +11,102 @@ package src.dp;
  * 示例：
  * 输入：[1,2,3,1]
  * 输出：4
- * 解释：偷窃 1 号房屋 (金额 = 1) ，然后偷窃 3 号房屋 (金额 = 3)。
- *      偷窃到的最高金额 = 1 + 3 = 4 。
+ * 解释：偷窃第1间房屋 (金额 = 1) ，然后偷窃第3间房屋 (金额 = 3)。
+ *      偷窃到的最高金额 = 1 + 3 = 4。
  * 
  * 输入：[2,7,9,3,1]
  * 输出：12
- * 解释：偷窃 1 号房屋 (金额 = 2), 偷窃 3 号房屋 (金额 = 9)，接着偷窃 5 号房屋 (金额 = 1)。
- *      偷窃到的最高金额 = 2 + 9 + 1 = 12 。
+ * 解释：偷窃第1间房屋 (金额 = 2), 偷窃第3间房屋 (金额 = 9)，接着偷窃第5间房屋 (金额 = 1)。
+ *      偷窃到的最高金额 = 2 + 9 + 1 = 12。
  * 
- * 时间复杂度：O(n)，其中 n 是数组长度
- * 空间复杂度：O(n) 或 O(1)，取决于具体实现
+ * 时间复杂度：O(n)，其中n是房屋的数量
+ * 空间复杂度：O(1)（优化后）或 O(n)（基本动态规划）
  */
 public class HouseRobber {
     
     /**
-     * 动态规划解法 (使用数组)
-     * 思路：对于每个房子，我们可以选择偷或不偷
-     * dp[i] 表示偷到第i个房子能获得的最大金额
+     * 动态规划解法
+     * dp[i]表示偷窃前i个房屋能获得的最大金额
+     * dp[i] = max(dp[i-1], dp[i-2] + nums[i-1])
      */
     public int rob(int[] nums) {
         if (nums == null || nums.length == 0) {
             return 0;
         }
         
-        if (nums.length == 1) {
+        int n = nums.length;
+        if (n == 1) {
             return nums[0];
         }
         
-        int[] dp = new int[nums.length];
+        int[] dp = new int[n + 1];
+        dp[0] = 0;
+        dp[1] = nums[0];
         
-        // 基本情况
-        dp[0] = nums[0];
-        dp[1] = Math.max(nums[0], nums[1]);
-        
-        // 填充dp数组
-        for (int i = 2; i < nums.length; i++) {
-            // 当前房子可以选择偷或不偷
-            // 如果偷：当前房子的金额 + 前两个房子能偷到的最大金额
-            // 如果不偷：前一个房子能偷到的最大金额
-            dp[i] = Math.max(dp[i - 2] + nums[i], dp[i - 1]);
+        for (int i = 2; i <= n; i++) {
+            // dp[i-1]: 不偷第i间房子
+            // dp[i-2] + nums[i-1]: 偷第i间房子
+            dp[i] = Math.max(dp[i - 1], dp[i - 2] + nums[i - 1]);
         }
         
-        return dp[nums.length - 1];
+        return dp[n];
     }
     
     /**
-     * 动态规划解法 (空间优化版本)
-     * 由于我们只需要前两个状态，所以可以使用两个变量代替数组
+     * 空间优化的动态规划解法
+     * 只需要两个变量记录前两个状态
      */
     public int robOptimized(int[] nums) {
         if (nums == null || nums.length == 0) {
             return 0;
         }
         
-        if (nums.length == 1) {
+        int n = nums.length;
+        if (n == 1) {
             return nums[0];
         }
         
-        // 第一个房子的最大金额
-        int first = nums[0];
-        // 前两个房子中的最大金额
-        int second = Math.max(nums[0], nums[1]);
+        int prev2 = 0;  // dp[i-2]
+        int prev1 = nums[0];  // dp[i-1]
+        int current = prev1;
         
-        for (int i = 2; i < nums.length; i++) {
-            // 计算当前位置的最大金额
-            int current = Math.max(first + nums[i], second);
-            // 更新状态
-            first = second;
-            second = current;
+        for (int i = 1; i < n; i++) {
+            current = Math.max(prev1, prev2 + nums[i]);
+            prev2 = prev1;
+            prev1 = current;
         }
         
-        return second;
+        return current;
     }
     
     /**
-     * 递归 + 记忆化解法
+     * 记忆化递归解法
      */
-    public int robMemo(int[] nums) {
+    public int robRecursive(int[] nums) {
         if (nums == null || nums.length == 0) {
             return 0;
         }
         
-        // 记忆数组，用于存储已计算的结果
-        Integer[] memo = new Integer[nums.length];
+        int[] memo = new int[nums.length];
+        for (int i = 0; i < memo.length; i++) {
+            memo[i] = -1;  // 初始化为-1表示未计算
+        }
         
         return robHelper(nums, nums.length - 1, memo);
     }
     
-    private int robHelper(int[] nums, int i, Integer[] memo) {
-        // 基本情况
+    private int robHelper(int[] nums, int i, int[] memo) {
         if (i < 0) {
             return 0;
         }
         
-        // 如果结果已经计算过，直接返回
-        if (memo[i] != null) {
+        if (memo[i] != -1) {
             return memo[i];
         }
         
-        // 计算结果：max(偷当前房子, 不偷当前房子)
-        memo[i] = Math.max(robHelper(nums, i - 2, memo) + nums[i], robHelper(nums, i - 1, memo));
-        
+        // 选择不偷当前房子或偷当前房子
+        memo[i] = Math.max(robHelper(nums, i - 1, memo), 
+                           robHelper(nums, i - 2, memo) + nums[i]);
         return memo[i];
     }
     
@@ -121,21 +116,21 @@ public class HouseRobber {
         
         // 测试例子
         int[] nums1 = {1, 2, 3, 1};
-        System.out.println("输入: [1,2,3,1]");
+        System.out.println("输入: " + java.util.Arrays.toString(nums1));
         System.out.println("动态规划解法: " + solution.rob(nums1));
-        System.out.println("优化解法: " + solution.robOptimized(nums1));
-        System.out.println("记忆化递归解法: " + solution.robMemo(nums1));
+        System.out.println("空间优化解法: " + solution.robOptimized(nums1));
+        System.out.println("记忆化递归解法: " + solution.robRecursive(nums1));
         
         int[] nums2 = {2, 7, 9, 3, 1};
-        System.out.println("\n输入: [2,7,9,3,1]");
+        System.out.println("\n输入: " + java.util.Arrays.toString(nums2));
         System.out.println("动态规划解法: " + solution.rob(nums2));
-        System.out.println("优化解法: " + solution.robOptimized(nums2));
-        System.out.println("记忆化递归解法: " + solution.robMemo(nums2));
+        System.out.println("空间优化解法: " + solution.robOptimized(nums2));
+        System.out.println("记忆化递归解法: " + solution.robRecursive(nums2));
         
         int[] nums3 = {2, 1, 1, 2};
-        System.out.println("\n输入: [2,1,1,2]");
+        System.out.println("\n输入: " + java.util.Arrays.toString(nums3));
         System.out.println("动态规划解法: " + solution.rob(nums3));
-        System.out.println("优化解法: " + solution.robOptimized(nums3));
-        System.out.println("记忆化递归解法: " + solution.robMemo(nums3));
+        System.out.println("空间优化解法: " + solution.robOptimized(nums3));
+        System.out.println("记忆化递归解法: " + solution.robRecursive(nums3));
     }
 } 

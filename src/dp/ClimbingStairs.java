@@ -22,29 +22,25 @@ package src.dp;
  * 3. 2 阶 + 1 阶
  * 
  * 时间复杂度：O(n)
- * 空间复杂度：O(1) 使用优化后的方法
+ * 空间复杂度：O(1)（优化后）或 O(n)（基本动态规划）
  */
 public class ClimbingStairs {
     
     /**
      * 动态规划解法（自底向上）
-     * 使用数组存储中间结果
+     * dp[i]表示爬到第i阶楼梯的方法数
+     * dp[i] = dp[i-1] + dp[i-2]
      */
     public int climbStairs(int n) {
         if (n <= 2) {
             return n;
         }
         
-        // dp[i] 表示爬到第i阶的方法数
         int[] dp = new int[n + 1];
-        
-        // 基本情况
         dp[1] = 1; // 爬到第1阶有1种方法
         dp[2] = 2; // 爬到第2阶有2种方法
         
-        // 填充dp数组
         for (int i = 3; i <= n; i++) {
-            // 到达第i阶的方法 = 到达第(i-1)阶的方法 + 到达第(i-2)阶的方法
             dp[i] = dp[i - 1] + dp[i - 2];
         }
         
@@ -52,19 +48,18 @@ public class ClimbingStairs {
     }
     
     /**
-     * 优化的动态规划解法，使用常数空间
+     * 空间优化的动态规划解法
+     * 由于我们只需要前两个状态，所以可以只用两个变量代替数组
      */
     public int climbStairsOptimized(int n) {
         if (n <= 2) {
             return n;
         }
         
-        // 初始化前两个值
-        int prev1 = 1; // dp[1]
-        int prev2 = 2; // dp[2]
+        int prev1 = 1; // 表示dp[i-2]
+        int prev2 = 2; // 表示dp[i-1]
         int current = 0;
         
-        // 从第3阶开始计算
         for (int i = 3; i <= n; i++) {
             current = prev1 + prev2;
             prev1 = prev2;
@@ -75,27 +70,64 @@ public class ClimbingStairs {
     }
     
     /**
-     * 递归解法（自顶向下）- 带备忘录（记忆化搜索）
+     * 递归解法（自顶向下）
+     * 需要记忆化优化，否则会超时
      */
     public int climbStairsRecursive(int n) {
-        // 备忘录，用于存储已经计算过的结果
         int[] memo = new int[n + 1];
-        return climbStairsHelper(n, memo);
+        return recursiveWithMemo(n, memo);
     }
     
-    private int climbStairsHelper(int n, int[] memo) {
+    private int recursiveWithMemo(int n, int[] memo) {
         if (n <= 2) {
             return n;
         }
         
-        // 如果已经计算过，直接返回
         if (memo[n] > 0) {
             return memo[n];
         }
         
-        // 否则计算并存储结果
-        memo[n] = climbStairsHelper(n - 1, memo) + climbStairsHelper(n - 2, memo);
+        memo[n] = recursiveWithMemo(n - 1, memo) + recursiveWithMemo(n - 2, memo);
         return memo[n];
+    }
+    
+    /**
+     * 矩阵快速幂解法
+     * 时间复杂度可以优化到O(log n)
+     */
+    public int climbStairsMatrix(int n) {
+        if (n <= 2) {
+            return n;
+        }
+        
+        int[][] base = {{1, 1}, {1, 0}};
+        int[][] result = matrixPow(base, n - 1);
+        
+        return result[0][0] + result[0][1];
+    }
+    
+    private int[][] matrixPow(int[][] base, int power) {
+        int[][] result = {{1, 0}, {0, 1}}; // 单位矩阵
+        
+        while (power > 0) {
+            if ((power & 1) == 1) {
+                result = matrixMultiply(result, base);
+            }
+            
+            base = matrixMultiply(base, base);
+            power >>= 1;
+        }
+        
+        return result;
+    }
+    
+    private int[][] matrixMultiply(int[][] a, int[][] b) {
+        int[][] c = new int[2][2];
+        c[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0];
+        c[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1];
+        c[1][0] = a[1][0] * b[0][0] + a[1][1] * b[1][0];
+        c[1][1] = a[1][0] * b[0][1] + a[1][1] * b[1][1];
+        return c;
     }
     
     // 测试方法
@@ -104,18 +136,24 @@ public class ClimbingStairs {
         
         // 测试例子
         int n1 = 2;
-        System.out.println("n = " + n1 + "，方法数: " + solution.climbStairs(n1));
-        System.out.println("优化解法: " + solution.climbStairsOptimized(n1));
-        System.out.println("递归解法: " + solution.climbStairsRecursive(n1));
+        System.out.println("输入: n = " + n1);
+        System.out.println("动态规划解法: " + solution.climbStairs(n1));
+        System.out.println("空间优化解法: " + solution.climbStairsOptimized(n1));
+        System.out.println("记忆化递归解法: " + solution.climbStairsRecursive(n1));
+        System.out.println("矩阵快速幂解法: " + solution.climbStairsMatrix(n1));
         
         int n2 = 3;
-        System.out.println("\nn = " + n2 + "，方法数: " + solution.climbStairs(n2));
-        System.out.println("优化解法: " + solution.climbStairsOptimized(n2));
-        System.out.println("递归解法: " + solution.climbStairsRecursive(n2));
+        System.out.println("\n输入: n = " + n2);
+        System.out.println("动态规划解法: " + solution.climbStairs(n2));
+        System.out.println("空间优化解法: " + solution.climbStairsOptimized(n2));
+        System.out.println("记忆化递归解法: " + solution.climbStairsRecursive(n2));
+        System.out.println("矩阵快速幂解法: " + solution.climbStairsMatrix(n2));
         
         int n3 = 10;
-        System.out.println("\nn = " + n3 + "，方法数: " + solution.climbStairs(n3));
-        System.out.println("优化解法: " + solution.climbStairsOptimized(n3));
-        System.out.println("递归解法: " + solution.climbStairsRecursive(n3));
+        System.out.println("\n输入: n = " + n3);
+        System.out.println("动态规划解法: " + solution.climbStairs(n3));
+        System.out.println("空间优化解法: " + solution.climbStairsOptimized(n3));
+        System.out.println("记忆化递归解法: " + solution.climbStairsRecursive(n3));
+        System.out.println("矩阵快速幂解法: " + solution.climbStairsMatrix(n3));
     }
 } 
